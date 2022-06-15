@@ -9,6 +9,8 @@ usage()
 	echo "--rootfsdir dir - optional, defaults to current dir, where to"
 	echo "                  put cross-compiler and Haiku sysroot."
 	echo "--jobs N        - optional, restrict to N jobs."
+	echo "--branch name   - optional, branch to clone Haiku source."
+	echo "--repo link     - optional, URL to Haiku source repo."
 	exit 1
 }
 
@@ -48,6 +50,14 @@ while :; do
 			shift
 			MAXJOBS=$1
 			;;
+		--branch|-branch)
+			shift
+			__Branch=$1
+			;;
+		--repo|-repo)
+			shift
+			__Repo=$1
+			;;
 		*)
 			usage
 			;;
@@ -61,7 +71,16 @@ if [ -z "$__RootfsDir" ] && [ ! -z "$ROOTFS_DIR" ]; then
 	__RootfsDir=$ROOTFS_DIR
 fi
 
+if [ -z "$__Branch" ] ; then
+	__Branch="master"
+fi
+
+if [ -z "$__Repo" ] ; then
+	__Repo="https://github.com/haiku/haiku"
+fi
+
 echo "Using $__RootfsDir..."
+echo "Using Haiku source from $__Repo on branch $__Branch"
 
 mkdir -p $__RootfsDir
 __RootfsDir="$( cd "$__RootfsDir" && pwd )"
@@ -76,7 +95,7 @@ fi
 mkdir -p "$__RootfsDir/tmp"
 pushd "$__RootfsDir/tmp"
 if [ ! -e "$__RootfsDir/tmp/haiku/.git" ]; then
-	git clone https://github.com/haiku/haiku
+	git clone $__Repo -b $__Branch
 	pushd haiku && git remote add review https://review.haiku-os.org/haiku && git fetch --tags review && popd
 	#git clone --depth=1 https://review.haiku-os.org/haiku
 else
